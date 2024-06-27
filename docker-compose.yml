@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  order-service:
+    build:
+      context: ./order-service
+    ports:
+      - "3000:3000"
+    environment:
+      OTEL_EXPORTER_JAEGER_AGENT_HOST: jaeger
+      OTEL_EXPORTER_JAEGER_AGENT_PORT: 6832
+
+  payment-service:
+    build:
+      context: ./payment-service
+    ports:
+      - "3001:3001"
+    environment:
+      OTEL_EXPORTER_JAEGER_AGENT_HOST: jaeger
+      OTEL_EXPORTER_JAEGER_AGENT_PORT: 6832
+
+  delivery-service:
+    build:
+      context: ./delivery-service
+    ports:
+      - "3002:3002"
+    environment:
+      OTEL_EXPORTER_JAEGER_AGENT_HOST: jaeger
+      OTEL_EXPORTER_JAEGER_AGENT_PORT: 6832
+
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./frontend:/app/frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - order-service
+      - payment-service
+      - delivery-service
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.25
+    ports:
+      - "6832:6832/udp" # Ensure UDP port is exposed
+      - "16686:16686"
